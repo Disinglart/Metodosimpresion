@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Guía interactiva: métodos de impresión</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#06b6d4; --glass: rgba(255,255,255,0.03);
+      --success:#10b981; --danger:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; margin:0; background:linear-gradient(180deg,#071028 0%, #071522 100%); color:#e6eef6; -webkit-font-smoothing:antialiased}
+    header{padding:28px 20px; display:flex; gap:16px; align-items:center; justify-content:space-between}
+    .brand{display:flex; gap:12px; align-items:center}
+    .logo{width:52px;height:52px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:4px 0 0;color:var(--muted);font-size:13px}
+
+    main{display:grid;grid-template-columns:360px 1fr;gap:20px;padding:0 20px 40px}
+    .sidebar{background:var(--card);border-radius:14px;padding:18px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    .controls label{font-size:13px;color:var(--muted)}
+    .methods{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+    .method{background:var(--glass);padding:10px;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.03);display:flex;justify-content:space-between;align-items:center}
+    .method.selected{outline:2px solid rgba(6,182,212,0.12);background:linear-gradient(90deg, rgba(6,182,212,0.04), transparent)}
+    .method small{display:block;color:var(--muted);font-size:12px}
+
+    .search{margin-top:16px;display:flex;gap:8px;flex-direction:column}
+    .search-row{display:flex;gap:8px}
+    .search input{flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+    .search button{padding:10px 12px;border-radius:10px;border:0;background:var(--accent);color:#022;cursor:pointer}
+    .suggestions{margin-top:6px;background:rgba(255,255,255,0.02);border-radius:8px;padding:6px;max-height:140px;overflow:auto;border:1px solid rgba(255,255,255,0.03)}
+    .suggestions div{padding:8px;border-radius:6px;cursor:pointer}
+    .suggestions div:hover{background:rgba(255,255,255,0.02)}
+
+    .content{padding:18px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    .hero{display:flex;gap:18px;align-items:center}
+    .chip{font-size:13px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.02);color:var(--muted)}
+
+    .detail{margin-top:18px;display:grid;grid-template-columns:1fr 360px;gap:16px}
+    .card{background:var(--card);padding:14px;border-radius:12px}
+    .card h3{margin:0 0 8px}
+    .list{display:flex;flex-direction:column;gap:8px}
+    .list .item{padding:10px;border-radius:8px;background:var(--glass);border:1px solid rgba(255,255,255,0.02)}
+    .score{font-weight:700}
+
+    .examples{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .example{padding:10px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.03)}
+
+    footer{padding:18px;color:var(--muted);font-size:13px;text-align:center}
+
+    @media (max-width:900px){main{grid-template-columns:1fr;gap:12px}.detail{grid-template-columns:1fr}.examples{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">JI</div>
+      <div>
+        <h1> métodos de impresión</h1>
+        <p class="lead">Selecciona un método y revisa para qué objetivos puede ser viable.</p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <aside class="sidebar">
+      <div class="controls">
+        <label>Filtrar por método</label>
+        <div class="methods" id="methods"></div>
+
+        <div class="search">
+          <div class="search-row">
+            <input id="searchInput" placeholder="Buscar objetivo (ej: 'Catálogos', 'Flyers')" autocomplete="off" />
+            <button id="searchBtn">Buscar</button>
+          </div>
+          <div class="suggestions" id="suggestions" style="display:none"></div>
+
+          <div style="margin-top:8px;color:var(--muted);font-size:13px">
+            Escribe y selecciona una opción exacta de la lista para buscar. Si no existe, prueba con sinónimos.
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="content">
+      <div class="hero">
+        <div style="flex:1">
+          <div class="chip" id="selectedMethodChip">Selecciona un método</div>
+          <h2 id="methodTitle" style="margin:12px 0 0;font-size:18px">—</h2>
+          <p id="methodDesc" style="color:var(--muted);margin:6px 0 0">Aquí verás la descripción, ventajas y para qué objetivos es viable.</p>
+        </div>
+        <div style="width:160px;text-align:right">
+          <div style="font-size:12px;color:var(--muted)">Viabilidad general</div>
+          <div id="overallScore" style="font-size:28px;font-weight:800;color:var(--accent)">—</div>
+        </div>
+      </div>
+
+      <div class="detail">
+        <div>
+          <div class="card">
+            <h3>Objetivos viables</h3>
+            <div class="list" id="objectivesList">
+              <div class="item">Selecciona un método para ver objetivos recomendados.</div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3>Ventajas & Desventajas</h3>
+            <div id="prosCons">—</div>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3>Ejemplos & aplicaciones</h3>
+            <div class="examples" id="examples"></div>
+          </div>
+        </div>
+
+        <aside>
+          <div class="card">
+            <h3>Comparación rápida</h3>
+            <div id="comparison">Selecciona un método para ver la comparación.</div>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3>Proveedores & empresas</h3>
+            <div id="providers" style="font-size:14px;color:var(--muted)">Selecciona un método para ver proveedores y empresas que lo usan.</div>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <h3>Comentarios</h3>
+            <div style="color:var(--muted);font-size:14px;margin-bottom:8px">Deja tus comentarios y sugerencias. Se guardarán en tu navegador (cache) y podrás enviarlos a mi WhatsApp.</div>
+            <textarea id="commentText" rows="3" style="width:100%;padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:inherit"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button id="saveCommentBtn" style="flex:1;padding:8px;border-radius:8px;border:0;background:var(--accent);color:#022;cursor:pointer">Guardar</button>
+              <button id="sendWhatsappBtn" style="flex:1;padding:8px;border-radius:8px;border:0;background:var(--success);color:#022;cursor:pointer">Enviar a WhatsApp</button>
+            </div>
+            <div id="savedComments" style="margin-top:10px;color:var(--muted);font-size:13px;max-height:140px;overflow:auto"></div>
+          </div>
+        </aside>
+      </div>
+
+    </section>
+  </main>
+
+  <footer> Prototipo Creado Por Ivan Lara Diseñador grafico / Dixlap </footer>
+
+  <script>
+    // Datos base: métodos de impresión y objetivos recomendados
+    const DATA = {
+      "Digital":{
+        desc: "Impresión digital: ideal para tiradas cortas, personalización y tiempos rápidos.",
+        score:86,
+        objectives:[
+          {name:"Flyers promocionales", score:90, why:"Tiradas cortas y cambios frecuentes; económico a pequeña escala."},
+          {name:"Tarjetas personales", score:85, why:"Personalización y pequeños volúmenes."},
+          {name:"Impresiones bajo demanda (POD)", score:88, why:"Control de inventario y personalización."}
+        ],
+        pros:["Rápida implementación","Bajo costo para tiradas cortas","Personalización fácil"],
+        cons:["Costo unitario más alto en grandes volúmenes","Limitada selección de papeles especiales en algunos equipos"],
+        examples:["Promoción local","Invitaciones personalizadas"],
+        providers:[{"name":"Mockups Co","url":"https://mockups.com.co/"}],
+        companies:["Panadería El Buen Sabor","Startup Verde","Agencia Local"]
+      },
+      "Offset":{
+        desc: "Offset: estándar para tiradas medianas y grandes, gran fidelidad de color y variedad de papeles.",
+        score:92,
+        objectives:[
+          {name:"Catálogos", score:95, why:"Excelente control de color y menor costo por unidad en grandes cantidades."},
+          {name:"Revistas", score:92, why:"Calidad y consistencia en tiradas importantes."},
+          {name:"Folletos institucionales", score:90, why:"Ahorro en volumen y acabado profesional."}
+        ],
+        pros:["Mejor costo por unidad en volumen","Amplia gama de acabados y papeles","Alta fidelidad de color"],
+        cons:["Costos iniciales altos (planchas)","No rentable para tiradas muy cortas"],
+        examples:["Catálogo anual","Campaña nacional"],
+        providers:[{"name":"Vigraf Digital","url":"https://vigrafdigital.com/impresion-offset/"}],
+        companies:["Editorial Andina","Universidad Central","Empresa Textil S.A."]
+      },
+      "Serigrafía":{
+        desc: "Serigrafía: ideal para impresión sobre superficies no tradicionales y para colores sólidos intensos.",
+        score:78,
+        objectives:[
+          {name:"Merch (camisetas, tote bags)", score:95, why:"Durabilidad del color y buen resultado sobre textiles."},
+          {name:"Posters artísticos", score:80, why:"Acabados con tinta espesa y colores vibrantes."},
+          {name:"Stickers en vinilo grande", score:82, why:"Adherencia y resistencia al uso exterior."}
+        ],
+        pros:["Se puede imprimir sobre tejidos y superficies rígidas","Colores muy saturados"],
+        cons:["No ideal para detalles finos o degradados","Tiempo y costo en preparación"],
+        examples:["Camisetas de marca","Ediciones limitadas de posters"],
+        providers:[{"name":"Carpas Full Decolombia","url":"https://www.carpasfulldecolombia.com/impresion-serigrafica"}],
+        companies:["Marca Streetwear","Festival Cultural","Tienda Local"]
+      },
+      "Impresión UV":{
+        desc: "Impresión UV: permite imprimir sobre materiales rígidos con acabados especiales y secado instantáneo.",
+        score:81,
+        objectives:[
+          {name:"Señalética y displays", score:92, why:"Durabilidad y acabado profesional en materiales rígidos."},
+          {name:"Packaging de pequeña tirada", score:80, why:"Acabados especiales y detalles en superficies no porosas."}
+        ],
+        pros:["Imprime sobre materiales diversos","Secado instantáneo y resistencia"],
+        cons:["Costo por unidad alto en tiradas grandes","Limitaciones en algunas texturas"],
+        examples:["Cartelería premium","Prototipos de packaging"],
+        providers:[{"name":"Publicitar","url":"https://publicitar.com.co/tienda/servicios/servicio-de-impresion-uv-1-x-5-cm-personalizado/"}],
+        companies:["Tienda de Muebles","Marca de Diseño","Agencia BTL"]
+      },
+      "Diseño digital":{
+        desc: "Diseño digital: servicios de diseño y preparación de archivos para impresión y medios digitales.",
+        score:85,
+        objectives:[
+          {name:"Preparación de archivos para impresión", score:95, why:"Garantiza que los archivos cumplan requisitos técnicos."},
+          {name:"Maquetación digital", score:90, why:"Diseño editorial y preparación de catálogos."}
+        ],
+        pros:["Optimización para impresión","Mejora en la comunicación visual"],
+        cons:["No sustituye la impresión física","Depende del proveedor de impresión"],
+        examples:["Portafolios digitales","Maquetación editorial"],
+        providers:[{"name":"Disinglart","url":"https://disinglart.github.io/Disinglartportafolio/"}],
+        companies:["Estudio Creativo X","Editorial Indie","Marca Personal"]
+      }
+    };
+
+    // Build list of available objective names for suggestions and exact-match search
+    const ALL_OBJECTIVES = [];
+    Object.keys(DATA).forEach(m=>{ DATA[m].objectives.forEach(o=>{ ALL_OBJECTIVES.push(o.name); }) });
+
+    const methodsEl = document.getElementById('methods');
+    const selectedChip = document.getElementById('selectedMethodChip');
+    const title = document.getElementById('methodTitle');
+    const desc = document.getElementById('methodDesc');
+    const scoreEl = document.getElementById('overallScore');
+    const objectivesList = document.getElementById('objectivesList');
+    const prosCons = document.getElementById('prosCons');
+    const examplesEl = document.getElementById('examples');
+    const comparison = document.getElementById('comparison');
+    const providersEl = document.getElementById('providers');
+
+    const suggestionsEl = document.getElementById('suggestions');
+    const searchInput = document.getElementById('searchInput');
+
+    // Render buttons
+    function renderMethods(){
+      methodsEl.innerHTML = '';
+      Object.keys(DATA).forEach((m)=>{
+        const div = document.createElement('div');
+        div.className = 'method';
+        div.tabIndex = 0;
+        div.innerHTML = `
+          <div>
+            <strong>${m}</strong>
+            <small>${DATA[m].desc}</small>
+          </div>
+          <div style="text-align:right"><div style="font-weight:800">${DATA[m].score}%</div></div>
+        `;
+        div.addEventListener('click', ()=> selectMethod(m));
+        div.addEventListener('keypress', (e)=>{ if(e.key==='Enter') selectMethod(m) });
+        methodsEl.appendChild(div);
+      })
+    }
+
+    function selectMethod(name){
+      // mark selected
+      Array.from(methodsEl.children).forEach(c=> c.classList.toggle('selected', c.innerText.includes(name)));
+      const d = DATA[name];
+      selectedChip.textContent = name;
+      title.textContent = name;
+      desc.textContent = d.desc;
+      scoreEl.textContent = d.score + '%';
+
+      // objectives
+      objectivesList.innerHTML = '';
+      d.objectives.forEach(o=>{
+        const it = document.createElement('div'); it.className = 'item';
+        it.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><div><strong>${o.name}</strong><div style='font-size:12px;color:var(--muted)'>${o.why}</div></div><div class='score'>${o.score}%</div></div>`;
+        objectivesList.appendChild(it);
+      });
+
+      // pros & cons
+      prosCons.innerHTML = `
+        <div style="display:flex;gap:10px;flex-direction:column">
+          <div><strong>Pros:</strong><ul>${d.pros.map(p=>`<li>${p}</li>`).join('')}</ul></div>
+          <div><strong>Contras:</strong><ul>${d.cons.map(c=>`<li>${c}</li>`).join('')}</ul></div>
+        </div>
+      `;
+
+      // examples
+      examplesEl.innerHTML = d.examples.map(e=>`<div class='example'><strong>${e}</strong></div>`).join('');
+
+      // comparison (simple)
+      comparison.innerHTML = `<div style='font-size:14px;color:var(--muted)'>Comparado con otros métodos: <br><strong>${name}</strong> suele ser mejor cuando buscas <em>${d.objectives.map(o=>o.name).slice(0,2).join(', ')}</em>.</div>`;
+
+      // providers & companies
+      providersEl.innerHTML = `
+        <div style="margin-bottom:8px"><strong>Proveedores:</strong><ul>${d.providers.map(p=>`<li><a href='${p.url}' target='_blank' style='color:var(--accent)'>${p.name}</a></li>`).join('')}</ul></div>
+        <div><strong>Ejemplos de empresas que lo usan:</strong><ul>${d.companies.map(c=>`<li>${c}</li>`).join('')}</ul></div>
+      `;
+    }
+
+    // Suggestions dropdown logic: show all matching objective names as user types
+    function updateSuggestions(value){
+      const v = value.trim().toLowerCase();
+      if(!v){ suggestionsEl.style.display='none'; return; }
+      const matches = ALL_OBJECTIVES.filter(o=> o.toLowerCase().includes(v));
+      if(matches.length===0){ suggestionsEl.style.display='none'; return; }
+      suggestionsEl.innerHTML = '';
+      matches.forEach(m=>{
+        const d = document.createElement('div'); d.textContent = m;
+        d.addEventListener('click', ()=>{ searchInput.value = m; suggestionsEl.style.display='none'; });
+        suggestionsEl.appendChild(d);
+      })
+      suggestionsEl.style.display='block';
+    }
+
+    searchInput.addEventListener('input', (e)=> updateSuggestions(e.target.value));
+    document.addEventListener('click', (e)=>{ if(!e.target.closest('#suggestions') && e.target!==searchInput) suggestionsEl.style.display='none'; });
+
+    // Búsqueda por objetivo -> requiere coincidencia EXACTA con una de las opciones listadas
+    function searchObjective(term){
+      const t = term.trim();
+      if(!t){ alert('Escribe y selecciona una opción exacta de la lista.'); return; }
+      // find exact match (case-insensitive)
+      let found = null;
+      Object.keys(DATA).forEach(m=>{ DATA[m].objectives.forEach(o=>{ if(o.name.toLowerCase()===t.toLowerCase()) found = {method:m, objective:o}; }) });
+      if(!found){
+        // show suggestions to help
+        const similar = ALL_OBJECTIVES.filter(o=> o.toLowerCase().includes(t.toLowerCase())).slice(0,8);
+        if(similar.length>0){ alert('No hay coincidencia exacta. Selecciona una de las opciones sugeridas.'); suggestionsEl.innerHTML = ''; similar.forEach(s=>{ const d=document.createElement('div'); d.textContent=s; d.addEventListener('click', ()=>{ searchInput.value=s; suggestionsEl.style.display='none'; }); suggestionsEl.appendChild(d); }); suggestionsEl.style.display='block'; }
+        else{ alert('No se encontraron recomendaciones para "'+t+'". Prueba con sinónimos (ej: "catálogo", "folleto", "flyer").'); }
+        return;
+      }
+
+      // show grouped methods that include that objective
+      const matches = [];
+      Object.keys(DATA).forEach(m=>{ DATA[m].objectives.forEach(o=>{ if(o.name.toLowerCase()===t.toLowerCase()) matches.push({method:m, objective:o}); }) });
+      if(matches.length===0){ alert('No se encontraron recomendaciones.'); return; }
+
+      objectivesList.innerHTML = '';
+      const grouped = {};
+      matches.forEach(mm=>{ grouped[mm.method] = grouped[mm.method] || []; grouped[mm.method].push(mm.objective); });
+      Object.keys(grouped).forEach(m=>{
+        const it = document.createElement('div'); it.className='item';
+        it.innerHTML = `<strong>${m}</strong><div style='font-size:13px;color:var(--muted)'>${grouped[m].map(o=>o.name + ' — ' + o.why).join('<br>')}</div>`;
+        objectivesList.appendChild(it);
+      })
+      // highlight the first method
+      const first = matches[0].method; selectMethod(first);
+    }
+
+    document.getElementById('searchBtn').addEventListener('click', ()=>{ searchObjective(document.getElementById('searchInput').value) });
+    searchInput.addEventListener('keypress', (e)=>{ if(e.key==='Enter') searchObjective(e.target.value) });
+
+    // Comments: save to localStorage and option to send to WhatsApp (pre-filled)
+    const COMMENT_KEY = 'impr_comments_cache_v1';
+    const savedContainer = document.getElementById('savedComments');
+    const commentText = document.getElementById('commentText');
+    const saveBtn = document.getElementById('saveCommentBtn');
+    const sendBtn = document.getElementById('sendWhatsappBtn');
+    const WA_NUMBER = '573002662441'; // +57 3002662441
+
+    function loadComments(){
+      const arr = JSON.parse(localStorage.getItem(COMMENT_KEY) || '[]');
+      renderSaved(arr);
+    }
+    function renderSaved(arr){
+      if(arr.length===0){ savedContainer.innerHTML = '<div style="color:var(--muted)">No hay comentarios guardados.</div>'; return; }
+      savedContainer.innerHTML = arr.map((c,i)=>`<div style='padding:8px;border-radius:8px;background:rgba(255,255,255,0.01);margin-bottom:6px'><div style='font-size:13px;color:var(--muted)'>${new Date(c.t).toLocaleString()}</div><div style='margin-top:4px'>${escapeHtml(c.txt)}</div></div>`).join('');
+    }
+    function saveComment(){
+      const txt = commentText.value.trim(); if(!txt){ alert('Escribe un comentario antes de guardar.'); return; }
+      const arr = JSON.parse(localStorage.getItem(COMMENT_KEY) || '[]');
+      arr.unshift({t:Date.now(), txt:txt});
+      localStorage.setItem(COMMENT_KEY, JSON.stringify(arr));
+      commentText.value=''; loadComments();
+      alert('Comentario guardado en cache.');
+    }
+    function sendToWhatsapp(){
+      const txt = commentText.value.trim();
+      if(!txt){ alert('Escribe el mensaje que quieres enviar por WhatsApp (se enviará al número del investigador).'); return; }
+      const url = 'https://wa.me/'+WA_NUMBER+'?text=' + encodeURIComponent(txt);
+      window.open(url,'_blank');
+    }
+    function escapeHtml(unsafe) { return unsafe.replace(/[&<"'`=\/]/g, function (s) { return ({'&':'&amp;','<':'&lt;','"':'&quot;','\'':'&#39;','/':'\/','`':'&#96;','=':'='})[s]; }); }
+
+    saveBtn.addEventListener('click', saveComment);
+    sendBtn.addEventListener('click', sendToWhatsapp);
+
+    // init
+    renderMethods();
+    loadComments();
+    // select a default
+    selectMethod('Digital');
+  </script>
+</body>
+</html>
